@@ -262,3 +262,69 @@ namesplot(boys50new)
 if (savefigs) dev.off()
 ```
 
+---
+
+```{r}
+names_freqs <- allnames %>% 
+  as_tibble() %>% 
+  select(-X) %>% 
+  mutate_at(
+    vars(-name, -sex), 
+    function(val) val / sum(val)
+  ) %>% 
+  pivot_longer(
+    cols = !c(name, sex), 
+    names_to = "year", 
+    values_to = "freq"
+  ) %>% 
+  mutate(
+    year = substring(year, 2)
+  ) %>% 
+  mutate(
+    sex = as.factor(sex),
+    year = as.integer(year)
+  )
+```
+
+```{r}
+names_freqs_girls <- subset(names_freqs, sex == "F")
+```
+
+```{r}
+name_endings_girls <- names_freqs_girls %>% 
+  mutate(ending_char = substr(name, nchar(name) - 1 + 1, nchar(name))) %>% 
+  #group_by(year, ending_char) %>% 
+  aggregate(freq ~ year + ending_char, FUN = sum)
+
+name_endings_girls
+```
+
+## Exercise 2.3 Data processing: Go to the folder Names and make a graph similar to Figure 2.8, but for girls.
+```{r}
+ggplot(name_endings_girls, aes(x = year, y = freq)) +
+  geom_line(aes(color = ending_char)) +
+  scale_x_continuous(breaks = c(1900, 1950, 2000)) +
+  labs(title = "Last letters of girls' names\n", x = "\nYear", y = "Percentage of all girls' names that year\n") +
+  theme_minimal()
+```
+
+
+```{r}
+aggregated_names_freqs <- names_freqs %>% 
+  group_by(year) %>% 
+  top_n(10, freq) %>% 
+  summarise(sum_freq = sum(freq))
+```
+
+```{r}
+ggplot(aggregated_names_freqs, aes(year, sum_freq)) +
+  geom_line() +
+  scale_x_continuous(breaks = c(1900, 1950, 2000)) +
+  labs(title = "Total popularity of top 10 names per year for girls\n", x = "\nYear", y = "Summed prevalence [%]\n") +
+  theme_minimal()
+```
+
+
+
+
+
